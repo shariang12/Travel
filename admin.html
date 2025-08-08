@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Travel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #34495e;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status.paid {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.checked-in {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .status.expired {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .checkin-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        .checkin-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .search-filter {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .search-filter input, .search-filter select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex: 1;
+        }
+        .search-filter button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .admin-form {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .submit-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .today-highlight {
+            background-color: #fff8e1;
+        }
+        .expired-highlight {
+            background-color: #ffebee;
+        }
+        .checkin-soon-highlight {
+            background-color: #e8f5e9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Panel Travel</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="reservations">Reservasi</div>
+            <div class="tab" data-tab="schedules">Jadwal & Harga</div>
+            <div class="tab" data-tab="settings">Pengaturan</div>
+        </div>
+        
+        <!-- Tab Reservasi -->
+        <div class="tab-content active" id="reservations">
+            <div class="search-filter">
+                <input type="text" id="search-reservation" placeholder="Cari kode reservasi atau nama...">
+                <select id="filter-status">
+                    <option value="">Semua Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="paid">Sudah Bayar</option>
+                    <option value="checked-in">Sudah Check-in</option>
+                    <option value="expired">Kadaluarsa</option>
+                </select>
+                <input type="date" id="filter-date">
+                <button id="apply-filter">Terapkan</button>
+            </div>
+            
+            <table id="reservations-table">
+                <thead>
+                    <tr>
+                        <th>Kode</th>
+                        <th>Tanggal</th>
+                        <th>Rute</th>
+                        <th>Jadwal</th>
+                        <th>Kursi</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="reservations-list">
+                    <!-- Data reservasi akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Tab Jadwal & Harga -->
+        <div class="tab-content" id="schedules">
+            <div class="search-filter">
+                <select id="schedule-origin">
+                    <option value="">Semua Kota Asal</option>
+                    <option value="denpasar">Denpasar</option>
+                    <option value="situbondo">Situbondo</option>
+                    <option value="malang">Malang</option>
+                    <option value="surabaya">Surabaya</option>
+                </select>
+                <select id="schedule-destination">
+                    <option value="">Semua Kota Tujuan</option>
+                    <option value="surabaya">Surabaya</option>
+                    <option value="malang">Malang</option>
+                    <option value="situbondo">Situbondo</option>
+                    <option value="banyuwangi">Banyuwangi</option>
+                    <option value="denpasar">Denpasar</option>
+                </select>
+                <button id="search-schedule">Cari</button>
+                <button id="add-schedule" style="background-color: #28a745;">+ Tambah Jadwal</button>
+            </div>
+            
+            <table id="schedules-table">
+                <thead>
+                    <tr>
+                        <th>Kode</th>
+                        <th>Rute</th>
+                        <th>Waktu</th>
+                        <th>Kendaraan</th>
+                        <th>Kursi Tersedia</th>
+                        <th>Harga</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="schedules-list">
+                    <!-- Data jadwal akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="admin-form" id="schedule-form" style="display: none;">
+                <h3>Tambah/Edit Jadwal</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-origin">Kota Asal</label>
+                        <select id="new-origin">
+                            <option value="denpasar">Denpasar</option>
+                            <option value="situbondo">Situbondo</option>
+                            <option value="malang">Malang</option>
+                            <option value="surabaya">Surabaya</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-destination">Kota Tujuan</label>
+                        <select id="new-destination">
+                            <option value="surabaya">Surabaya</option>
+                            <option value="malang">Malang</option>
+                            <option value="situbondo">Situbondo</option>
+                            <option value="banyuwangi">Banyuwangi</option>
+                            <option value="denpasar">Denpasar</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-departure">Waktu Keberangkatan</label>
+                        <input type="time" id="new-departure" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-arrival">Waktu Kedatangan</label>
+                        <input type="time" id="new-arrival" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-vehicle">Kendaraan</label>
+                        <input type="text" id="new-vehicle" placeholder="Contoh: Toyota Hiace" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-seats">Jumlah Kursi</label>
+                        <input type="number" id="new-seats" min="1" max="20" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-price">Harga per Kursi</label>
+                        <input type="number" id="new-price" min="100000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-travel-name">Nama Travel</label>
+                        <input type="text" id="new-travel-name" placeholder="Nama perusahaan travel" required>
+                    </div>
+                </div>
+                
+                <button class="submit-btn" id="save-schedule">Simpan Jadwal</button>
+                <button class="submit-btn" id="cancel-schedule" style="background-color: #dc3545;">Batal</button>
+            </div>
+        </div>
+        
+        <!-- Tab Pengaturan -->
+        <div class="tab-content" id="settings">
+            <div class="admin-form">
+                <h3>Pengaturan Sistem</h3>
+                
+                <div class="form-group">
+                    <label for="checkin-time">Waktu Check-in Minimal Sebelum Keberangkatan (menit)</label>
+                    <input type="number" id="checkin-time" value="30" min="15" max="120">
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-email">Email Admin</label>
+                    <input type="email" id="admin-email" placeholder="admin@travel.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="reservation-expiry">Masa Berlaku Reservasi (jam)</label>
+                    <input type="number" id="reservation-expiry" value="24" min="1" max="72">
+                </div>
+                
+                <button class="submit-btn" id="save-settings">Simpan Pengaturan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data awal
+        let reservations = JSON.parse(localStorage.getItem('adminReservations')) || [];
+        let schedules = JSON.parse(localStorage.getItem('travelSchedules')) || [
+            {
+                id: 'SCH001',
+                origin: 'denpasar',
+                destination: 'surabaya',
+                departure: '07:00',
+                arrival: '12:00',
+                vehicle: 'Toyota Hiace',
+                seats: 12,
+                availableSeats: 5,
+                price: 150000,
+                travelName: 'Sumber Kencono'
+            },
+            {
+                id: 'SCH002',
+                origin: 'surabaya',
+                destination: 'malang',
+                departure: '08:00',
+                arrival: '09:30',
+                vehicle: 'Isuzu Elf',
+                seats: 14,
+                availableSeats: 8,
+                price: 75000,
+                travelName: 'Laju Prima'
+            }
+        ];
+        
+        let settings = JSON.parse(localStorage.getItem('travelSettings')) || {
+            checkinTime: 30,
+            adminEmail: 'admin@travel.com',
+            reservationExpiry: 24
+        };
+        
+        let currentEditingSchedule = null;
+        
+        // Inisialisasi halaman
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load data
+            if (localStorage.getItem('travelSchedules') === null) {
+                localStorage.setItem('travelSchedules', JSON.stringify(schedules));
+            }
+            if (localStorage.getItem('travelSettings') === null) {
+                localStorage.setItem('travelSettings', JSON.stringify(settings));
+            }
+            
+            // Load pengaturan
+            document.getElementById('checkin-time').value = settings.checkinTime;
+            document.getElementById('admin-email').value = settings.adminEmail;
+            document.getElementById('reservation-expiry').value = settings.reservationExpiry;
+            
+            // Tampilkan data
+            renderReservations();
+            renderSchedules();
+            
+            // Setup tabs
+            setupTabs();
+            
+            // Setup form jadwal
+            setupScheduleForm();
+            
+            // Setup pengaturan
+            setupSettings();
+            
+            // Setup filter reservasi
+            setupReservationFilter();
+        });
+        
+        // Fungsi untuk setup tabs
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Hapus active class dari semua tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Tambahkan active class ke tab yang diklik
+                    this.classList.add('active');
+                    
+                    // Sembunyikan semua konten tab
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Tampilkan konten tab yang sesuai
+                    const tabId = this.dataset.tab;
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Fungsi untuk render data reservasi
+        function renderReservations(filteredReservations = null) {
+            const reservationsList = document.getElementById('reservations-list');
+            reservationsList.innerHTML = '';
+            
+            const dataToRender = filteredReservations || reservations;
+            
+            dataToRender.forEach(reservation => {
+                const now = new Date();
+                const travelDate = new Date(reservation.date);
+                const checkinTime = settings.checkinTime || 30;
+                
+                // Cek apakah reservasi sudah kadaluarsa
+                const expiryTime = new Date(reservation.paymentTime);
+                expiryTime.setHours(expiryTime.getHours() + (settings.reservationExpiry || 24));
+                
+                let status = reservation.checkinStatus || 'pending';
+                if (status === 'pending' && now > expiryTime) {
+                    status = 'expired';
+                }
+                
+                // Tentukan class highlight
+                let rowClass = '';
+                const today = new Date().toISOString().split('T')[0];
+                if (reservation.date === today) {
+                    rowClass = 'today-highlight';
+                }
+                
+                if (status === 'expired') {
+                    rowClass = 'expired-highlight';
+                } else if (status === 'paid') {
+                    // Cek jika waktu check-in sudah dekat (dalam 1 jam)
+                    const checkinStartTime = new Date(travelDate);
+                    const [hours, minutes] = reservation.scheduleTime.split(' - ')[0].split(':');
+                    checkinStartTime.setHours(parseInt(hours), parseInt(minutes) - checkinTime, 0, 0);
+                    
+                    const oneHourBeforeCheckin = new Date(checkinStartTime);
+                    oneHourBeforeCheckin.setHours(oneHourBeforeCheckin.getHours() - 1);
+                    
+                    if (now >= oneHourBeforeCheckin && now < checkinStartTime) {
+                        rowClass = 'checkin-soon-highlight';
+                    }
+                }
+                
+                const row = document.createElement('tr');
+                if (rowClass) {
+                    row.className = rowClass;
+                }
+                
+                row.innerHTML = `
+                    <td>${reservation.reservationCode}</td>
+                    <td>${formatDate(reservation.date)}</td>
+                    <td>${formatCityName(reservation.origin)} → ${formatCityName(reservation.destination)}</td>
+                    <td>${reservation.scheduleTime}</td>
+                    <td>${reservation.seats.join(', ')}</td>
+                    <td><span class="status ${status}">${getStatusText(status)}</span></td>
+                    <td>Rp ${reservation.totalPrice.toLocaleString('id-ID')}</td>
+                    <td>
+                        <button class="action-btn checkin-btn" data-code="${reservation.reservationCode}" 
+                            ${status !== 'paid' ? 'disabled' : ''}>
+                            Check-in
+                        </button>
+                    </td>
+                `;
+                
+                reservationsList.appendChild(row);
+            });
+            
+            // Setup event listener untuk tombol check-in
+            document.querySelectorAll('.checkin-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const reservationCode = this.dataset.code;
+                    processCheckin(reservationCode);
+                });
+            });
+        }
+        
+        // Fungsi untuk render data jadwal
+        function renderSchedules() {
+            const schedulesList = document.getElementById('schedules-list');
+            schedulesList.innerHTML = '';
+            
+            schedules.forEach(schedule => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${schedule.id}</td>
+                    <td>${formatCityName(schedule.origin)} → ${formatCityName(schedule.destination)}</td>
+                    <td>${schedule.departure} - ${schedule.arrival}</td>
+                    <td>${schedule.vehicle} (${schedule.travelName})</td>
+                    <td>${schedule.availableSeats}/${schedule.seats}</td>
+                    <td>Rp ${schedule.price.toLocaleString('id-ID')}</td>
+                    <td>
+                        <button class="action-btn" style="background-color: #17a2b8;" data-id="${schedule.id}">Edit</button>
+                        <button class="action-btn" style="background-color: #dc3545;" data-id="${schedule.id}">Hapus</button>
+                    </td>
+                `;
+                schedulesList.appendChild(row);
+            });
+            
+            // Setup event listener untuk tombol edit/hapus
+            document.querySelectorAll('#schedules-list button').forEach(btn => {
+                if (btn.textContent === 'Edit') {
+                    btn.addEventListener('click', function() {
+                        editSchedule(this.dataset.id);
+                    });
+                } else if (btn.textContent === 'Hapus') {
+                    btn.addEventListener('click', function() {
+                        if (confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
+                            deleteSchedule(this.dataset.id);
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Fungsi untuk setup form jadwal
+        function setupScheduleForm() {
+            // Tombol tambah jadwal
+            document.getElementById('add-schedule').addEventListener('click', function() {
+                currentEditingSchedule = null;
+                document.getElementById('schedule-form').style.display = 'block';
+                resetScheduleForm();
+            });
+            
+            // Tombol simpan jadwal
+            document.getElementById('save-schedule').addEventListener('click', function() {
+                saveSchedule();
+            });
+            
+            // Tombol batal
+            document.getElementById('cancel-schedule').addEventListener('click', function() {
+                document.getElementById('schedule-form').style.display = 'none';
+            });
+        }
+        
+        // Fungsi untuk setup pengaturan
+        function setupSettings() {
+            document.getElementById('save-settings').addEventListener('click', function() {
+                settings.checkinTime = parseInt(document.getElementById('checkin-time').value) || 30;
+                settings.adminEmail = document.getElementById('admin-email').value || 'admin@travel.com';
+                settings.reservationExpiry = parseInt(document.getElementById('reservation-expiry').value) || 24;
+                
+                localStorage.setItem('travelSettings', JSON.stringify(settings));
+                alert('Pengaturan berhasil disimpan!');
+            });
+        }
+        
+        // Fungsi untuk setup filter reservasi
+        function setupReservationFilter() {
+            document.getElementById('apply-filter').addEventListener('click', function() {
+                const searchTerm = document.getElementById('search-reservation').value.toLowerCase();
+                const statusFilter = document.getElementById('filter-status').value;
+                const dateFilter = document.getElementById('filter-date').value;
+                
+                let filtered = reservations;
+                
+                if (searchTerm) {
+                    filtered = filtered.filter(res => 
+                        res.reservationCode.toLowerCase().includes(searchTerm)
+                }
+                
+                if (statusFilter) {
+                    filtered = filtered.filter(res => {
+                        if (statusFilter === 'expired') {
+                            const now = new Date();
+                            const expiryTime = new Date(res.paymentTime);
+                            expiryTime.setHours(expiryTime.getHours() + (settings.reservationExpiry || 24));
+                            return now > expiryTime;
+                        }
+                        return (res.checkinStatus || 'pending') === statusFilter;
+                    });
+                }
+                
+                if (dateFilter) {
+                    filtered = filtered.filter(res => res.date === dateFilter);
+                }
+                
+                renderReservations(filtered);
+            });
+        }
+        
+        // Fungsi untuk memproses check-in
+        function processCheckin(reservationCode) {
+            const reservation = reservations.find(r => r.reservationCode === reservationCode);
+            if (!reservation) return;
+            
+            // Cek apakah waktu check-in valid (30 menit sebelum keberangkatan)
+            const now = new Date();
+            const travelDate = new Date(reservation.date);
+            const [hours, minutes] = reservation.scheduleTime.split(' - ')[0].split(':');
+            travelDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            
+            const checkinEndTime = new Date(travelDate);
+            const checkinStartTime = new Date(travelDate);
+            checkinStartTime.setMinutes(checkinStartTime.getMinutes() - (settings.checkinTime || 30));
+            
+            if (now < checkinStartTime) {
+                alert(`Check-in hanya bisa dilakukan mulai ${formatDateTime(checkinStartTime)}`);
+                return;
+            }
+            
+            if (now > checkinEndTime) {
+                alert('Waktu check-in sudah lewat');
+                return;
+            }
+            
+            // Update status check-in
+            reservation.checkinStatus = 'checked-in';
+            reservation.checkinTime = now.toISOString();
+            
+            // Simpan ke localStorage
+            localStorage.setItem('adminReservations', JSON.stringify(reservations));
+            
+            // Refresh tampilan
+            renderReservations();
+            alert(`Check-in berhasil untuk reservasi ${reservationCode}`);
+        }
+        
+        // Fungsi untuk menyimpan jadwal baru/edit
+        function saveSchedule() {
+            const origin = document.getElementById('new-origin').value;
+            const destination = document.getElementById('new-destination').value;
+            const departure = document.getElementById('new-departure').value;
+            const arrival = document.getElementById('new-arrival').value;
+            const vehicle = document.getElementById('new-vehicle').value;
+            const seats = parseInt(document.getElementById('new-seats').value);
+            const price = parseInt(document.getElementById('new-price').value);
+            const travelName = document.getElementById('new-travel-name').value;
+            
+            if (!origin || !destination || !departure || !arrival || !vehicle || !seats || !price || !travelName) {
+                alert('Harap isi semua field!');
+                return;
+            }
+            
+            if (currentEditingSchedule) {
+                // Edit jadwal yang ada
+                const index = schedules.findIndex(s => s.id === currentEditingSchedule);
+                if (index !== -1) {
+                    schedules[index] = {
+                        ...schedules[index],
+                        origin,
+                        destination,
+                        departure,
+                        arrival,
+                        vehicle,
+                        seats,
+                        price,
+                        travelName
+                    };
+                }
+            } else {
+                // Tambah jadwal baru
+                const newId = 'SCH' + (schedules.length + 1000).toString().substring(1);
+                schedules.push({
+                    id: newId,
+                    origin,
+                    destination,
+                    departure,
+                    arrival,
+                    vehicle,
+                    seats,
+                    availableSeats: seats,
+                    price,
+                    travelName
+                });
+            }
+            
+            // Simpan ke localStorage
+            localStorage.setItem('travelSchedules', JSON.stringify(schedules));
+            
+            // Reset form dan refresh tampilan
+            document.getElementById('schedule-form').style.display = 'none';
+            renderSchedules();
+            alert(`Jadwal ${currentEditingSchedule ? 'diperbarui' : 'ditambahkan'} dengan sukses!`);
+        }
+        
+        // Fungsi untuk mengedit jadwal
+        function editSchedule(scheduleId) {
+            const schedule = schedules.find(s => s.id === scheduleId);
+            if (!schedule) return;
+            
+            currentEditingSchedule = scheduleId;
+            document.getElementById('schedule-form').style.display = 'block';
+            
+            // Isi form dengan data jadwal
+            document.getElementById('new-origin').value = schedule.origin;
+            document.getElementById('new-destination').value = schedule.destination;
+            document.getElementById('new-departure').value = schedule.departure;
+            document.getElementById('new-arrival').value = schedule.arrival;
+            document.getElementById('new-vehicle').value = schedule.vehicle;
+            document.getElementById('new-seats').value = schedule.seats;
+            document.getElementById('new-price').value = schedule.price;
+            document.getElementById('new-travel-name').value = schedule.travelName;
+        }
+        
+        // Fungsi untuk menghapus jadwal
+        function deleteSchedule(scheduleId) {
+            schedules = schedules.filter(s => s.id !== scheduleId);
+            localStorage.setItem('travelSchedules', JSON.stringify(schedules));
+            renderSchedules();
+            alert('Jadwal berhasil dihapus');
+        }
+        
+        // Fungsi untuk reset form jadwal
+        function resetScheduleForm() {
+            document.getElementById('new-origin').value = 'denpasar';
+            document.getElementById('new-destination').value = 'surabaya';
+            document.getElementById('new-departure').value = '';
+            document.getElementById('new-arrival').value = '';
+            document.getElementById('new-vehicle').value = '';
+            document.getElementById('new-seats').value = '';
+            document.getElementById('new-price').value = '';
+            document.getElementById('new-travel-name').value = '';
+        }
+        
+        // Fungsi helper untuk format tanggal
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+        
+        // Fungsi helper untuk format tanggal dan waktu
+        function formatDateTime(date) {
+            if (!date) return '-';
+            const options = { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(date).toLocaleDateString('id-ID', options);
+        }
+        
+        // Fungsi helper untuk format nama kota
+        function formatCityName(city) {
+            if (!city) return '-';
+            return city.charAt(0).toUpperCase() + city.slice(1);
+        }
+        
+        // Fungsi helper untuk teks status
+        function getStatusText(status) {
+            const statusText = {
+                'pending': 'Menunggu Pembayaran',
+                'paid': 'Sudah Bayar',
+                'checked-in': 'Sudah Check-in',
+                'expired': 'Kadaluarsa'
+            };
+            return statusText[status] || status;
+        }
+    </script>
+</body>
+</html>
